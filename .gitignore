@@ -1,0 +1,42 @@
+# Local data and generated results
+/data/*
+!/data/README.md
+/outputs/
+/results/
+/models/
+/checkpoints/
+/runs/
+/wandb/
+/mlruns/
+*.pt
+*.pth
+*.ckpt
+*.joblib
+*.pkl
+*.pickle
+
+# Python environments, caches, and build artifacts
+.venv/
+venv/
+.uv-cache/
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+.ipynb_checkpoints/
+
+# Credentials and machine-specific settings
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+.DS_Store
+Thumbs.db
+.idea/
