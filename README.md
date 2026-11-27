@@ -1,96 +1,66 @@
 # Cancer omics machine learning
 
-Cancer multi-omics analysis using PyTorch and the
-[MLOmics benchmark](https://github.com/chenzRG/Cancer-Multi-Omics-Benchmark).
-The aim is to build reproducible models from mRNA expression, miRNA expression,
-DNA methylation, and copy number variation data.
+![Heatmap of the PAM50 genes selected by the model, across training samples grouped by breast cancer subtype](docs/figures/pam50_heatmap.png)
 
-This repository currently provides the project structure and Python environment.
-Data loading, model training, and evaluation will be developed after choosing the
-first cohort and prediction target. No analysis results are reported yet.
+![Final model: nested cross-validation macro F1 against a majority baseline, with the test-set confusion matrix](docs/figures/final_model.png)
 
-## Setup
+![Macro F1 for each omics type and combination across five cross-validation folds](docs/figures/multi_omics_scores.png)
 
-Use Python 3.11 to 3.13. Python 3.12 is used in CI. From the repository root:
+![PCA of all mRNA genes for the training samples, coloured by PAM50 subtype](docs/figures/pca_subtypes.png)
 
-```bash
-python -m venv .venv
+## Code
+
+```mermaid
+flowchart TD
+    data[("MLOmics GS-BRCA<br/>mRNA · miRNA · methylation · CNV")]
+
+    lc["<b>learn_classifier.py</b><br/>load and audit · stratified split<br/>majority baseline · tuned logistic regression"]
+    sf["<b>select_features.py</b><br/>ANOVA gene selection inside each fold<br/>shuffled-label leakage test"]
+    lt["<b>learn_torch.py</b><br/>linear and hidden-layer PyTorch models<br/>early stopping"]
+    cm["<b>compare_models.py</b><br/>paired fold comparison<br/>scikit-learn vs PyTorch"]
+    mo["<b>multi_omics.py</b><br/>single and combined omics types"]
+    im["<b>inspect_model.py</b><br/>model weights · PAM50 overlap"]
+    fm["<b>final_model.py</b><br/>nested cross-validation<br/>one test-set evaluation"]
+    pca["<b>pca_plot.py</b><br/>unsupervised PCA"]
+    pt["<b>pytorch_ml.py</b><br/>standalone PyTorch lesson"]
+
+    f1[/"pam50_heatmap.png"/]
+    f2[/"final_model.png"/]
+    f3[/"multi_omics_scores.png"/]
+    f4[/"pca_subtypes.png"/]
+
+    data --> lc
+    data --> mo
+    data --> pt
+    lc --> sf
+    lc --> lt
+    lt --> cm
+    lc --> cm
+    lc --> mo
+    sf --> im
+    sf --> fm
+    im --> fm
+    im --> pca
+    lc --> pca
+
+    im --> f1
+    fm --> f2
+    mo --> f3
+    pca --> f4
 ```
 
-Activate the environment:
+## Data
 
-```powershell
-# Windows PowerShell
-.\.venv\Scripts\Activate.ps1
-```
+The input data come from **MLOmics**, using the `GS-BRCA` classification
+dataset: 671 TCGA breast tumours with mRNA, miRNA, DNA methylation and copy
+number measurements, each labelled with one of five PAM50 subtypes (LumA, Her2,
+LumB, Normal, Basal).
 
-```bash
-# macOS or Linux
-source .venv/bin/activate
-```
+- Dataset: [MLOmics on Hugging Face](https://huggingface.co/datasets/AIBIC/MLOmics) (CC BY 4.0)
+- Benchmark code: [Cancer Multi-Omics Benchmark](https://github.com/chenzRG/Cancer-Multi-Omics-Benchmark)
+- Paper: Yang, Z. *et al.* MLOmics: Cancer Multi-Omics Database for Machine
+  Learning. *Scientific Data* **12** (2025).
+  [doi:10.1038/s41597-025-05235-x](https://doi.org/10.1038/s41597-025-05235-x)
 
-Install the CPU build of PyTorch on Windows or Linux, followed by the project:
-
-```bash
-python -m pip install --upgrade pip
-python -m pip install "torch>=2.6,<3" --index-url https://download.pytorch.org/whl/cpu
-python -m pip install -e ".[dev,notebooks]"
-```
-
-For macOS or an NVIDIA GPU, use the appropriate installation command from
-[PyTorch](https://pytorch.org/get-started/locally/) in place of the CPU command.
-Then run the editable project installation above.
-
-Check the environment:
-
-```bash
-python -c "import cancer_omics_ml, torch; print('PyTorch:', torch.__version__); print('CUDA:', torch.cuda.is_available())"
-python -m ruff check src
-python -m ruff format --check src
-```
-
-Open notebooks with `python -m jupyterlab`. If needed, register this environment:
-
-```bash
-python -m ipykernel install --user --name cancer-omics-ml --display-name "Python (cancer-omics-ml)"
-```
-
-## Repository layout
-
-| Location | Purpose |
-| --- | --- |
-| [src/cancer_omics_ml/](src/cancer_omics_ml/) | Reusable data, modelling, and evaluation code |
-| [notebooks/](notebooks/) | Numbered exploratory and analysis notebooks |
-| [data/](data/README.md) | Local input data and source documentation |
-| `outputs/` | Generated figures, metrics, and run metadata, created as needed |
-| [pyproject.toml](pyproject.toml) | Package metadata and Python dependencies |
-
-Datasets, downloaded benchmark code, trained models, and generated outputs are
-excluded from Git. Keep notebook outputs cleared before committing, especially
-when they contain sample identifiers or clinical information.
-
-## Analysis plan
-
-1. Select a cohort, task, target, and evaluation metric.
-2. Audit sample identifiers, feature orientation, missingness, and class balance.
-3. Split by patient before fitting preprocessing or selecting features. Keep the
-   final test set separate from model selection.
-4. Establish a simple baseline, then train a small PyTorch model.
-5. Compare held-out performance and record uncertainty, seeds, split membership,
-   exact dependency versions, data provenance, and hardware settings locally.
-
-The benchmark includes preprocessed feature sets. Review normalization and
-feature-selection provenance before interpreting held-out performance. See the
-[data notes](data/README.md).
-
-## Data source
-
-MLOmics is maintained by the upstream authors. Its dataset card declares a
-[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) license. Consult the
-upstream terms and retain attribution when reusing data:
-
-- [MLOmics paper](https://doi.org/10.1038/s41597-025-05235-x)
-- [Benchmark code](https://github.com/chenzRG/Cancer-Multi-Omics-Benchmark)
-- [Dataset distribution](https://huggingface.co/datasets/AIBIC/MLOmics)
-
-Research use only. Models developed here are not clinically validated.
+The data are not included in this repository; see
+[data/README.md](data/README.md) for where to place them.

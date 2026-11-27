@@ -26,12 +26,13 @@ jobs:
           python -m pip install -e ".[dev]"
       - name: Check Python style
         run: |
-          python -m ruff check src
-          python -m ruff format --check src
-      - name: Check package and PyTorch
+          python -m ruff check src tests plot_style
+          python -m ruff format --check src tests plot_style
+      - name: Test learning workflow without private inputs
+        run: python -m unittest discover -s tests -v
+      - name: Check dependencies and PyTorch
         run: |
           python - <<'PY'
-          import cancer_omics_ml
           import matplotlib
           import numpy
           import pandas
